@@ -1,4 +1,3 @@
-"use client";
 import "jsvectormap/dist/jsvectormap.css";
 import "flatpickr/dist/flatpickr.min.css";
 import "@/css/satoshi.css";
@@ -14,7 +13,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <div className="dark:bg-boxdark-2 dark:text-bodydark grid md:place-items-center min-h-screen w-screen">
+        <div className="grid min-h-screen w-screen dark:bg-boxdark-2 dark:text-bodydark md:place-items-center">
           {children}
         </div>
       </body>
