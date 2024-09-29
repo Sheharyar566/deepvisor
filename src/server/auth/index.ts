@@ -1,12 +1,22 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "./prisma";
+import { prisma } from "../prisma";
 import Credentials from "next-auth/providers/credentials";
-import { hash, verify } from "@node-rs/argon2";
+import { verify } from "@node-rs/argon2";
+import { z } from "zod";
+import { IncorrectPasswordError, InvalidCredentialsError, UserNotFoundError } from "./errors";
+
+const loginSchema = z.object({
+  email: z.string().email().toLowerCase(),
+  password: z.string().min(8),
+});
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: 'jwt',
+  },
   providers: [
     GoogleProvider,
     Credentials({
@@ -17,7 +27,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
       authorize: async (credentials) => {
-        const { email, password } = credentials;
+        const parsed = loginSchema.safeParse(credentials);
+
+        if (parsed.error) {
+          throw new InvalidCredentialsError();
+        }
+
+        const { email, password } = parsed.data;
 
         const user = await prisma.user.findFirst({
           where: {
@@ -26,15 +42,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user) {
-          throw new Error("User not found");
+          throw new UserNotFoundError();
         } else if (!user.password) {
-          throw new Error("This email is already attached to another account. Please check other login options");
+          throw new IncorrectPasswordError();
         }
 
         const isMatching = await verify(user.password, password as string);
 
         if (!isMatching) {
-          throw new Error("Invalid password");
+          throw new IncorrectPasswordError();
         }
 
         return user
@@ -42,6 +58,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   pages: {
-    signIn: '/auth/signIn',
-  }
+    signIn: '/auth/signin',
+  },
 })
