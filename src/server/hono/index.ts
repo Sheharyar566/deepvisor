@@ -1,10 +1,11 @@
-import { Hono } from 'hono'
-import { handle } from 'hono/vercel'
-import { AuthRouter } from './routers'
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import { zValidator } from '@hono/zod-validator'
 import { hash } from '@node-rs/argon2';
 import { z } from 'zod'
 import { prisma } from '../prisma'
+import { sendEmail } from '../mailer';
+import { sign, verify } from 'jsonwebtoken';
 
 export const runtime = 'edge'
 
@@ -42,6 +43,86 @@ app.post('/signup', zValidator('json', z.object({
   return c.json({
     message: 'User created',
   }, 201);
+});
+
+app.post('/forgot-password', zValidator('json', z.object({
+  email: z.string().email(),
+}).strict()), async (c) => {
+  const { email } = c.req.valid('json');
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email,
+    }
+  });
+
+  if (!existingUser) {
+    return c.json({
+      message: 'User not found'
+    }, 400);
+  } else if (!existingUser.email) {
+    throw new Error("User exists but email not found");
+  }
+
+  const token = sign({ email }, process.env.AUTH_SECRET!, {
+    expiresIn: '1h',
+  });
+
+  await prisma.verificationToken.create({
+    data: {
+      token,
+      identifier: existingUser.id,
+      expires: new Date(), // We won't be using it either way
+    }
+  });
+
+  const link = `${process.env.BASE_URL}/password-reset/${token}`;
+
+  // await sendEmail(existingUser.email, 'Forgot Password', link);
+
+  return c.json({ message: `Password reset link sent to your email: ${link}` }, 200);
+});
+
+app.post('/reset-password', zValidator('json', z.object({
+  token: z.string(),
+  password: z.string().min(8),
+}).strict()), async (c) => {
+  try {
+    const { token, password } = c.req.valid('json');
+
+    verify(token, process.env.AUTH_SECRET!);
+    const existingToken = await prisma.verificationToken.delete({
+      where: {
+        token,
+      }
+    });
+
+    if (!existingToken) {
+      return c.json({
+        message: 'Invalid token'
+      }, 400);
+    }
+
+    const passwordHash = await hash(password);
+
+    await prisma.user.update({
+      where: {
+        id: existingToken.identifier,
+      },
+      data: {
+        password: passwordHash,
+      }
+    });
+
+    return c.json({
+      message: 'Password reset',
+    }, 200);
+  } catch (e) {
+    console.error(e);
+    return c.json({
+      message: 'Something went wrong!'
+    }, 500);
+  }
 });
 
 const honoApp = handle(app);
