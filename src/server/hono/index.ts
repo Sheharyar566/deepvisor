@@ -76,11 +76,11 @@ app.post('/forgot-password', zValidator('json', z.object({
     }
   });
 
-  const link = `${process.env.BASE_URL}/password-reset/${token}`;
+  const link = `${process.env.BASE_URL}/auth/reset-password?token=${token}`;
 
-  // await sendEmail(existingUser.email, 'Forgot Password', link);
+  await sendEmail(existingUser.email, 'Forgot Password', link);
 
-  return c.json({ message: `Password reset link sent to your email: ${link}` }, 200);
+  return c.json({ success: true }, 200);
 });
 
 app.post('/reset-password', zValidator('json', z.object({
