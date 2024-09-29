@@ -4,9 +4,9 @@ import "@/css/satoshi.css";
 import "@/css/style.css";
 
 import React from "react";
-import Loader from "@/components/common/Loader";
 import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
+import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 export default async function RootLayout({
   children,
@@ -22,7 +22,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <div className="dark:bg-boxdark-2 dark:text-bodydark">{children}</div>
+        <div className="dark:bg-boxdark-2 dark:text-bodydark">
+          <DefaultLayout>{children}</DefaultLayout>
+        </div>
       </body>
     </html>
   );
