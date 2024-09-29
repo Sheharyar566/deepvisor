@@ -7,23 +7,26 @@ import React from "react";
 import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import { SessionProvider } from "next-auth/react";
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isLoggedIn = await auth();
+  const session = await auth();
 
-  if (!isLoggedIn) {
+  if (!session) {
     return redirect("/auth/signin");
   }
 
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <div className="dark:bg-boxdark-2 dark:text-bodydark">
-          <DefaultLayout>{children}</DefaultLayout>
+        <div className="min-h-dvh dark:bg-boxdark-2 dark:text-bodydark">
+          <SessionProvider session={session}>
+            <DefaultLayout>{children}</DefaultLayout>
+          </SessionProvider>
         </div>
       </body>
     </html>
