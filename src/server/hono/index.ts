@@ -76,7 +76,8 @@ app.post('/forgot-password', zValidator('json', z.object({
     }
   });
 
-  const link = `${process.env.BASE_URL}/auth/reset-password?token=${token}`;
+  const baseURL = process.env.VERCEL_URL ?? process.env.BASE_URL;
+  const link = `${baseURL}/auth/reset-password?token=${token}`;
 
   await sendEmail(existingUser.email, 'Forgot Password', link);
 
