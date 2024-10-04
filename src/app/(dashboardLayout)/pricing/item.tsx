@@ -7,7 +7,7 @@ interface Props {
   pricing: string;
   description: string;
   features: string[];
-  buttonLink: string;
+  onButtonClick: () => void;
   buttonText: string;
 }
 
@@ -18,7 +18,7 @@ const PricingOption = ({
   type,
   pricing,
   description,
-  buttonLink,
+  onButtonClick,
   buttonText,
 }: Props) => (
   <div className="flex h-full flex-col gap-[0.7rem] overflow-hidden rounded-sm border border-stroke bg-white p-13 shadow-default dark:border-strokedark dark:bg-boxdark md:gap-[1.875rem]">
@@ -46,9 +46,13 @@ const PricingOption = ({
     </div>
 
     <div className="mt-auto">
-      <Link href={buttonLink} className="btn-primary mt-10 w-full">
+      <button
+        type="button"
+        onClick={onButtonClick}
+        className="btn-primary mt-10 w-full"
+      >
         {buttonText}
-      </Link>
+      </button>
     </div>
   </div>
 );

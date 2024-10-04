@@ -1,7 +1,42 @@
+"use client";
+
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import PricingOption from "./item";
+import { useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { useMutation } from "@tanstack/react-query";
+import API from "@/api";
+
+loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const PricingPage = () => {
+  const { mutate } = useMutation({
+    mutationFn: (plan: "BASIC" | "PREMIUM") =>
+      API.post<undefined, { redirectURL: string }>(
+        "/api/stripe/create-checkout-session",
+        {
+          plan,
+        },
+      ),
+    onSuccess: ({ redirectURL }) => {
+      window.location.href = redirectURL;
+    },
+  });
+
+  useEffect(() => {
+    // Check to see if this is a redirect back from Checkout
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("success")) {
+      console.log("Order placed! You will receive an email confirmation.");
+    }
+
+    if (query.get("canceled")) {
+      console.log(
+        "Order canceled -- continue to shop around and checkout when you’re ready.",
+      );
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-242.5">
       <Breadcrumb pageName="Pricing" />
@@ -21,7 +56,7 @@ const PricingPage = () => {
             "Basic Mitigation Strategies",
           ]}
           buttonText="Start Now"
-          buttonLink="/onboarding/free"
+          onButtonClick={() => mutate("BASIC")}
         />
 
         <PricingOption
@@ -38,7 +73,7 @@ const PricingPage = () => {
             "Highly Customized Mitigation Strategies",
             "Detailed Reporting",
           ]}
-          buttonLink="/onboarding/premium"
+          onButtonClick={() => mutate("PREMIUM")}
           buttonText="Upgrade to premium"
         />
       </div>

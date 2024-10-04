@@ -57,6 +57,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    session: async ({ session, token }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: token.sub,
+      }
+    }),
+  },
   pages: {
     signIn: '/auth/signin',
   },
