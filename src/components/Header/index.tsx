@@ -1,7 +1,11 @@
 import Link from "next/link";
-import DarkModeSwitcher from "./DarkModeSwitcher";
 import DropdownUser from "./DropdownUser";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const DarkModeSwitcher = dynamic(() => import("./DarkModeSwitcher"), {
+  ssr: false,
+});
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;

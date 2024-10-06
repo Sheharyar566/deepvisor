@@ -1,4 +1,4 @@
-import { sendEmail } from "@/server/mailer";
+import { sendEmail } from "@/server/hono/services/mailer";
 import { prisma } from "@/server/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { hash, verify } from "@node-rs/argon2";
